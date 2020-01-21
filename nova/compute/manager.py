@@ -2234,6 +2234,10 @@ class ComputeManager(manager.Manager):
             self.reportclient.delete_allocation_for_instance(context,
                                                              instance.uuid)
 
+            # NOTE(mgoddard): If the instance has any PCI devices, these will
+            # have been deallocated.
+            instance.refresh()
+
             self.compute_task_api.build_instances(context, [instance],
                     image, filter_properties, admin_password,
                     injected_files, requested_networks, security_groups,
