@@ -62,6 +62,11 @@ class Claim(NopClaim):
         super(Claim, self).__init__(migration=migration)
         # Stash a copy of the instance at the current point of time
         self.instance = instance.obj_clone()
+        # NOTE(mgoddard) Also keep a copy of the original instance object to
+        # use if the claim is aborted. Using the original object ensures that
+        # changes such as PCI device deallocation are reflected in the object
+        # seen by the caller.
+        self.instance_orig = instance
         self.nodename = nodename
         self.tracker = tracker
         self._pci_requests = pci_requests
@@ -79,8 +84,8 @@ class Claim(NopClaim):
         """Compute operation requiring claimed resources has failed or
         been aborted.
         """
-        LOG.debug("Aborting claim: %s", self, instance=self.instance)
-        self.tracker.abort_instance_claim(self.context, self.instance,
+        LOG.debug("Aborting claim: %s", self, instance=self.instance_orig)
+        self.tracker.abort_instance_claim(self.context, self.instance_orig,
                                           self.nodename)
 
     def _claim_test(self, compute_node, limits=None):
@@ -179,12 +184,12 @@ class MoveClaim(Claim):
         """Compute operation requiring claimed resources has failed or
         been aborted.
         """
-        LOG.debug("Aborting claim: %s", self, instance=self.instance)
+        LOG.debug("Aborting claim: %s", self, instance=self.instance_orig)
         self.tracker.drop_move_claim(
             self.context,
-            self.instance, self.nodename,
+            self.instance_orig, self.nodename,
             instance_type=self.instance_type)
-        self.instance.drop_migration_context()
+        self.instance_orig.drop_migration_context()
 
     def _test_pci(self):
         """Test whether this host can accept this claim's PCI requests. For

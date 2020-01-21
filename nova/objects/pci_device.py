@@ -437,12 +437,13 @@ class PciDevice(base.NovaPersistentObject, base.NovaObject):
         if old_status == fields.PciDeviceStatus.ALLOCATED and instance:
             # Notes(yjiang5): remove this check when instance object for
             # compute manager is finished
-            existed = next((dev for dev in instance['pci_devices']
-                if dev.id == self.id))
-            if isinstance(instance, dict):
-                instance['pci_devices'].remove(existed)
-            else:
-                instance.pci_devices.objects.remove(existed)
+            matching = [dev for dev in instance['pci_devices']
+                        if dev.id == self.id]
+            if matching:
+                if isinstance(instance, dict):
+                    instance['pci_devices'].remove(matching[0])
+                else:
+                    instance.pci_devices.objects.remove(matching[0])
         return free_devs
 
     def is_available(self):

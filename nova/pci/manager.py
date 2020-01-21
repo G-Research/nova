@@ -291,7 +291,7 @@ class PciDevTracker(object):
                     instance['uuid'], pci_dev, self.allocations)
                 self._remove_device_from_pci_mapping(
                     instance['uuid'], pci_dev, self.claims)
-                self._free_device(pci_dev)
+                self._free_device(pci_dev, instance)
                 break
 
     def _remove_device_from_pci_mapping(
@@ -324,7 +324,7 @@ class PciDevTracker(object):
             for dev in self.pci_devs:
                 if (dev.status == fields.PciDeviceStatus.ALLOCATED and
                         dev.instance_uuid == instance['uuid']):
-                    self._free_device(dev)
+                    self._free_device(dev, instance)
 
     def free_instance_claims(self, context, instance):
         """Free devices that are in CLAIMED state for instance.
@@ -336,7 +336,7 @@ class PciDevTracker(object):
             for dev in self.pci_devs:
                 if (dev.status == fields.PciDeviceStatus.CLAIMED and
                         dev.instance_uuid == instance['uuid']):
-                    self._free_device(dev)
+                    self._free_device(dev, instance)
 
     def free_instance(self, context, instance):
         """Free devices that are in CLAIMED or ALLOCATED state for instance.
